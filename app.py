@@ -3,7 +3,7 @@ from main import *
 from users import users
 from jokes.fijih_taptal import taptal
 
-bot = telebot.TeleBot("7020635477:AAGMYTfV1GDdYT8NpxJzutfZUJQR20jtf3M")
+bot = telebot.TeleBot("this is not my token")
 
 u = users()
 t = tokens()
