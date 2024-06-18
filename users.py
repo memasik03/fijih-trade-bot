@@ -19,8 +19,22 @@ class users:
     __default_wallet_name = "main"
 
     def __init__(self) -> None:
-        toDB("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, tg_id INTEGER, tg_username TEXT)")
-        toDB("CREATE TABLE IF NOT EXISTS wallets (id INTEGER PRIMARY KEY AUTOINCREMENT, tg_username TEXT, wallet_address TEXT, wallet_name TEXT)")
+        toDB("""CREATE TABLE IF NOT EXISTS users (
+            
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tg_id INTEGER,
+            tg_username TEXT
+            
+            )""")
+
+        toDB("""CREATE TABLE IF NOT EXISTS wallets (
+            
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tg_username TEXT,
+            wallet_address TEXT,
+            wallet_name TEXT
+            
+            )""")
 
     def start(self, tg_id, tg_username):
         user = toDB("SELECT * FROM users WHERE tg_id = (?) AND tg_username = (?)", (tg_id, tg_username), True)
@@ -28,6 +42,9 @@ class users:
             toDB("INSERT INTO users (tg_id, tg_username) VALUES (?, ?)", (tg_id, tg_username))
             wallet = wallets()
             wallet.create_wallet(tg_username)
-            toDB("INSERT INTO wallets (tg_username, wallet_address, wallet_name) VALUES (?, ?, ?)", (tg_username, wallet.get_wallet(tg_username), self.__default_wallet_name))
+            toDB("INSERT INTO wallets (tg_username, wallet_address, wallet_name) VALUES (?, ?, ?)", (tg_username, wallet.get_wallet(wallet.get_address(tg_username))[0][1], self.__default_wallet_name))
         else:
             return user[0]
+
+    def get_wallet_name(self, wallet_address):
+        return toDB("SELECT * FROM wallets WHERE wallet_address = (?)", (wallet_address,), True)[0][3]

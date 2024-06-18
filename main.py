@@ -28,15 +28,12 @@ class wallets:
             usd FLOAT
             
             )""")
-
-    def create_wallet(self, holder_name):
-        hash_object = hashlib.sha256(str(len(toDB("SELECT * FROM wallets", (), True))).encode())
-        wallet_address = hash_object.hexdigest()
-        print(wallet_address)
-        toDB("INSERT INTO wallets (address, holder_name, usd) VALUES (?, ?, ?)", (wallet_address, holder_name, self.__start_balance))
-
-    def get_wallet(self, holder_name):
-        return toDB("SELECT * FROM wallets WHERE holder_name = (?)", (holder_name,), True)[0][1]
+    def get_address(self, holder_name):
+        result = toDB("SELECT * FROM wallets WHERE holder_name = (?)", (holder_name,), True)
+        if result == []:
+            raise ValueError("Wallet not found")
+        else:
+            return result[0][1]
 
     def get_balance(self, wallet_address):
         result = toDB("SELECT * FROM wallets WHERE address = (?)", (wallet_address,), True)
@@ -44,6 +41,19 @@ class wallets:
             raise ValueError("Wallet not found")
         else:
             return result[0][3]
+
+    def get_wallet(self, wallet_address):
+        result = toDB("SELECT * FROM wallets WHERE address = (?)", (wallet_address,), True)
+        if result == []:
+            raise ValueError("Wallet not found")
+        else:
+            return result
+
+    def create_wallet(self, holder_name):
+        hash_object = hashlib.sha256(str(len(toDB("SELECT * FROM wallets", (), True))).encode())
+        wallet_address = hash_object.hexdigest()
+        print(wallet_address)
+        toDB("INSERT INTO wallets (address, holder_name, usd) VALUES (?, ?, ?)", (wallet_address, holder_name, self.__start_balance))
 
     def change_balance(self, wallet_address, change_a_lot):
         toDB("UPDATE wallets SET usd = usd - (?) WHERE address = (?)", (change_a_lot, wallet_address))
@@ -70,6 +80,12 @@ class holders:
     def get_token_count(self, token_name, holder_address):
         try:
             return toDB("SELECT * FROM holders WHERE token_name = (?) AND holder = (?)", (token_name, holder_address), True)[0][2]
+        except:
+            return []
+        
+    def get_holder_info(self, holder_address):
+        try:
+            return toDB("SELECT * FROM holders WHERE holder = (?)", (holder_address,), True)
         except:
             return []
 
