@@ -2,10 +2,10 @@ import telebot
 from telebot import types
 from main import *
 from users import users
-from jokes.fijih_taptal import taptal
+from fun.fijih_taptal import taptal
 import re
 
-bot = telebot.TeleBot("ne")
+bot = telebot.TeleBot("7020635477:AAEkVXi5NgOLz8LAeWUI8-6ifCZpLVCpy_Y")
 
 u = users()
 t = tokens()
@@ -15,6 +15,8 @@ w = wallets()
 tl = taptal()
 
 tl.start()
+
+transactions = []
 
 @bot.message_handler(commands=["start"])
 def start(message):
@@ -81,7 +83,7 @@ def course(message):
 
 
 
-@bot.message_handler(commands=["wallets"])
+@bot.message_handler(commands=["wallet"])
 def wallets_list(message):
     u.start(message.chat.id, message.from_user.username)
     user_address = w.get_address(message.from_user.username)
@@ -105,5 +107,59 @@ def wallets_list(message):
 def isdigit(num):
     match = re.search(r"\.\d+", str(num))
     return match
+
+
+
+@bot.message_handler(commands=["pay"])
+def enter_wallet_address(message):
+    u.start(message.chat.id, message.from_user.username)
+    transactions.append({"from": w.get_address(message.from_user.username), "to": ""})
+    bot.send_message(message.chat.id, "Введите адрес получателя:")
+    bot.register_next_step_handler(message, pay)
+
+def pay(message):
+        wallet_address = message.text
+        if not w.is_valid_address(wallet_address):
+            bot.send_message(message.chat.id, "Адрес получателя не найден")
+            for el in transactions:
+                if el["from"] == message.from_user.username:
+                    transactions.remove(el)
+            return
+        else:
+            for el in transactions:
+                print(el["from"], "sjfhksdjhfksdkfhksdf")
+                if el["from"] == w.get_address(message.from_user.username):
+                    print(2)
+                    transactions[transactions.index(el)]["to"] = wallet_address
+            bot.send_message(message.chat.id, "Введите сумму перевода:")
+            bot.register_next_step_handler(message, pay_summ)
+
+def pay_summ(message):
+    summ = float(message.text)
+    print(transactions)
+    try:
+        if summ < t.min_purchase_price:
+            bot.send_message(message.chat.id, f"Минимальная сумма перевода - {t.min_purchase_price}$")
+            for el in transactions:
+                if el["from"] == message.from_user.username:
+                    transactions.remove(el)
+            return
+        elif summ > w.get_balance(w.get_address(message.from_user.username)):
+            bot.send_message(message.chat.id, f"Недостаточно средств")
+            for el in transactions:
+                if el["from"] == message.from_user.username:
+                    transactions.remove(el)
+        else:
+            for el in transactions:
+                print("akah")
+                if el["from"] == w.get_address(message.from_user.username):
+                    print(summ)
+                    w.change_balance(w.get_address(message.from_user.username), summ)
+                    w.change_balance(el["to"], -summ)
+                    bot.send_message(message.chat.id, f"Вы успешно перевели <b>{summ}$</b> на адрес {el["to"]}", parse_mode="html")
+                    transactions.remove(el)
+                    break
+    except:
+        bot.send_message(message.chat.id, f"Ошибка")
 
 bot.polling()

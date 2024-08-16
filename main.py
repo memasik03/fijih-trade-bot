@@ -17,7 +17,7 @@ def toDB(command, tuple="", fetch=False):
 
 
 class wallets:
-    __start_balance = 300.0
+    __start_balance = 30.0
 
     def __init__(self) -> None:
         toDB("""CREATE TABLE IF NOT EXISTS wallets (
@@ -34,6 +34,13 @@ class wallets:
             raise ValueError("Wallet not found")
         else:
             return result[0][1]
+
+    def get_name(self, wallet_address):
+        result = toDB("SELECT * FROM wallets WHERE address = (?)", (wallet_address,), True)
+        if result == []:
+            raise ValueError("User not found")
+        else:
+            return result[0][2]
 
     def get_balance(self, wallet_address):
         result = toDB("SELECT * FROM wallets WHERE address = (?)", (wallet_address,), True)
@@ -57,6 +64,12 @@ class wallets:
 
     def change_balance(self, wallet_address, change_a_lot):
         toDB("UPDATE wallets SET usd = usd - (?) WHERE address = (?)", (change_a_lot, wallet_address))
+
+    def is_valid_address(self, wallet_address):
+        if toDB("SELECT * FROM wallets WHERE address = (?)", (wallet_address,), True) == []:
+            return False
+        else:
+            return True
 
 
 
@@ -94,8 +107,8 @@ class holders:
 class tokens:
     min_purchase_price = 0.001
     max_token_name_length = 15
-    __price_multiply = 10
-    __price_decimal = 5
+    __price_multiply = 1
+    __price_decimal = 1
 
     def __init__(self) -> None:
         toDB("""CREATE TABLE IF NOT EXISTS tokens (
@@ -127,3 +140,7 @@ class tokens:
 
     def sell_token(self, token_name, count):
         toDB("UPDATE tokens SET volume = volume - (?) WHERE token_name = (?)", (self.get_token_price(token_name) * count * self.__price_multiply, token_name))
+
+tok = tokens()
+
+tok.buy_token("TAPTAL", 1000)
